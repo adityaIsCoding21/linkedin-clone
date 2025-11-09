@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import API_BASE_URL from "../config";
 
+
+
 const Feed = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
@@ -18,25 +20,44 @@ const Feed = () => {
     try {
       const payload = JSON.parse(atob(tk.split('.')[1]));
       return String(payload.userId || payload.id || null);
-    } catch {
+    } catch (e) {
       return null;
     }
   };
 
   const currentUserId = getUserIdFromToken(token);
 
-  // ✅ Fetch posts from deployed backend
-  const fetchPosts = async () => {
-    const res = await axios.get(`${API_BASE_URL}/posts/feed`);
-    setPosts(res.data);
+  const likePost = async (id) => {
+    try {
+      const res = await axios.put(`${API_BASE_URL}/posts/like/${id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const updatedPost = res.data.post;
+      setPosts((prevPosts) =>
+        prevPosts.map((p) =>
+          String(p._id) === String(updatedPost._id) ? updatedPost : p
+        )
+      );
+    } catch (err) {
+      console.log("Like error:", err);
+    }
   };
 
-  useEffect(() => {
-    if (!token) navigate("/login");
-    else fetchPosts();
-  }, []);
+useEffect(() => {
+  if (!token) {
+    navigate("/login");
+  } else {
+    fetchPosts();
+  }
+}, []);
 
-  // ✅ Create Post
+
+const fetchPosts = async () => {
+  const res = await axios.get(`${API_BASE_URL}/posts/feed`);
+  setPosts(res.data);
+};
+
+
   const createPost = async () => {
     if (!newPost.trim()) return;
 
@@ -53,13 +74,14 @@ const Feed = () => {
         }
       );
 
-      if (res.data?.post) setPosts((p) => [res.data.post, ...p]);
-      else fetchPosts();
-
+      if (res.data?.post) {
+        setPosts((p) => [res.data.post, ...p]);
+      } else {
+        fetchPosts();
+      }
       setNewPost("");
       setImageFile(null);
       setImagePreview(null);
-
     } catch (err) {
       console.log("Post error:", err);
     }
@@ -67,70 +89,47 @@ const Feed = () => {
 
   const onImageChange = (e) => {
     const file = e.target.files?.[0];
-    setImageFile(file || null);
-    setImagePreview(file ? URL.createObjectURL(file) : null);
-  };
-
-  // ✅ Like / Unlike
-  const likePost = async (id) => {
-    try {
-      const res = await axios.put(
-        `${API_BASE_URL}/posts/like/${id}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const updated = res.data.post;
-      setPosts((prev) => prev.map((p) => p._id === updated._id ? updated : p));
-    } catch (err) {
-      console.log("Like error:", err);
+    if (!file) {
+      setImageFile(null);
+      setImagePreview(null);
+      return;
     }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
-  // ✅ Delete Post
   const deletePost = async (id) => {
     try {
-      const res = await axios.delete(`${API_BASE_URL}/posts/delete/${id}`, {
+      const res = await axios.delete(
+        `${API_BASE_URL}/posts/delete/${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      if (res.data.success) {
+        setPosts((prev) => prev.filter((p) => String(p._id) !== String(id)));
+      } else {
+        alert(res.data.message);
+      }
+    } catch (err) {
+      console.log('Delete error:', err);
+    }
+  };
+
+  const editPost = async (id) => {
+    const newMsg = prompt('Edit your post message:');
+    if (newMsg == null) return;
+    try {
+      const res = await axios.put(`${API_BASE_URL}/posts/edit/${id}`, { message: newMsg }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      if (res.data.success)
-        setPosts((prev) => prev.filter((p) => p._id !== id));
-      else alert(res.data.message);
-
-    } catch (err) {
-      console.log("Delete error:", err);
-    }
-  };
-
-  // ✅ Edit Post
-  const editPost = async (id) => {
-    const newMsg = prompt("Edit your post:");
-    if (!newMsg) return;
-
-    try {
-      const res = await axios.put(
-        `${API_BASE_URL}/posts/edit/${id}`,
-        { message: newMsg },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
       const updated = res.data.post;
-      setPosts((prev) => prev.map((p) => p._id === updated._id ? updated : p));
-    } catch (err) {
-      console.log("Edit error:", err);
-    }
-  };
-
-  // ✅ Add Comment
-  const addComment = async (postId, text) => {
-    try {
-      const res = await axios.post(
-        `${API_BASE_URL}/posts/comment/${postId}`,
-        { text },
-        { headers: { Authorization: `Bearer ${token}` } }
+      setPosts((prev) =>
+        prev.map((p) => String(p._id) === String(updated._id) ? updated : p)
       );
-      setPosts((prev) => prev.map((p) => p._id === postId ? res.data : p));
     } catch (err) {
-      console.log("Comment error:", err);
+      console.error('Edit error:', err);
     }
   };
 
@@ -139,72 +138,137 @@ const Feed = () => {
     navigate("/login");
   };
 
+  
+
+  
+
+  
+ const addComment = async (postId, text) => {
+  try {
+    const res = await axios.post(
+      `${API_BASE_URL}/posts/comment/${postId}`,
+      { text },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    
+    
+    setPosts(prev => 
+      prev.map(p => p._id === postId ? res.data : p)
+    );
+  } catch (err) {
+    console.log("Comment error:", err);
+  }
+};
+
+
   return (
     <div>
       <Navbar onLogout={logoutUser} />
+
       <div className="app-container">
-        <main className="main">
+        <div className="layout">
+          <aside className="left">
+            <div className="sidebar-card card">
+              <p style={{margin:0}}>Profile Summary</p>
+            </div>
+          </aside>
 
-          {/* Create Post */}
-          <div className="card post-input">
-            <textarea
-              placeholder="Share something..."
-              value={newPost}
-              onChange={(e) => setNewPost(e.target.value)}
-            ></textarea>
+          <main className="main">
+            {}
+            <div className="card post-input" style={{ marginBottom: 20 }}>
+          <textarea
+            placeholder="Share something..."
+            value={newPost}
+            onChange={(e) => setNewPost(e.target.value)}
+            rows="3"
+                style={{ minHeight: 72 }}
+          ></textarea>
 
-            <input type="file" accept="image/*" onChange={onImageChange} />
-            {imagePreview && <img src={imagePreview} alt="preview" />}
-
-            <button className="btn btn--primary" onClick={createPost}>Post</button>
+          <div className="post-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+            <div>
+              <input type="file" accept="image/*" onChange={onImageChange} />
+              {imagePreview && <div style={{ marginTop: 8 }}><img src={imagePreview} alt="preview" style={{ maxWidth: '100%' }} /></div>}
+            </div>
+            <div>
+              <button className="btn btn--primary" onClick={createPost}>Post</button>
+            </div>
           </div>
+        </div>
 
-          {/* Feed */}
-          {posts.map((post) => (
-            <article key={post._id} className="card post-card">
+        {}
+        {posts.filter(Boolean).map((post) => (
+          <article key={post._id} className="card post-card" style={{ marginBottom: 16 }}>
+            <div className="post-header">
+              <div>
+                <strong onClick={() => navigate(`/profile/${post.user?._id}`)}>{post.user?.name}</strong>
+                <div style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                  {new Date(post.createdAt).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            <div>{post.message}</div>
 
-              <strong onClick={() => navigate(`/profile/${post.user?._id}`)}>
-                {post.user?.name}
-              </strong>
+            {post.image && (
+              <div className="post-image">
+                <img src={`${API_BASE_URL}${post.image}`} alt="post" />
+              </div>
+            )}
 
-              <p>{post.message}</p>
-
-              {post.image && (
-                <img src={`${API_BASE_URL}${post.image}`} alt="post" className="post-image" />
-              )}
-
-              <button onClick={() => likePost(post._id)}>
-                👍 {post.likes?.length || 0}
+            <div className="actions-row">
+              <button 
+                onClick={() => likePost(post._id)}
+                title={post.likes?.map(user => user.name).join(', ')}
+              >
+                <span style={{ color: post.likes?.some(like => String(like._id) === String(currentUserId)) ? '#0a66c2' : 'inherit' }}>
+                  Like👍
+                </span>
+                <span style={{ marginLeft: '4px' }}>{post.likes?.length || 0}</span>
               </button>
-
-              {String(post.user?._id) === String(currentUserId) && (
-                <>
+              {currentUserId && post.user && String(post.user._id) === String(currentUserId) && (
+                <span>
                   <button onClick={() => editPost(post._id)}>Edit</button>
-                  <button onClick={() => deletePost(post._id)}>Delete</button>
-                </>
+                  <button onClick={() => deletePost(post._id)} style={{ marginLeft: 8 }}>Delete</button>
+                </span>
               )}
+            </div>
 
-              {/* Comments */}
+            <div className="comments">
               {post.comments?.map((c, i) => (
-                <p key={i}><strong>{c.user?.name}: </strong> {c.text}</p>
+                <div key={i} className="comment">
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <strong onClick={() => navigate(`/profile/${c.user?._id}`)}>{c.user?.name}</strong>
+                    <span style={{ fontSize: 12, color: 'gray' }}>{new Date(c.createdAt).toLocaleString()}</span>
+                  </div>
+                  <div style={{ marginTop: 6 }}>{c.text}</div>
+                </div>
               ))}
 
-              <input
-                placeholder="Write a comment..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && e.target.value.trim()) {
-                    addComment(post._id, e.target.value);
-                    e.target.value = "";
-                  }
-                }}
-              />
+              <div className="comment-input">
+                <input
+                  type="text"
+                  placeholder="Write a comment..."
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.target.value.trim()) {
+                      addComment(post._id, e.target.value);
+                      e.target.value = "";
+                    }
+                  }}
+                />
+                <button className="btn btn--primary" onClick={(e) => { const input = e.target.previousSibling; if (input.value.trim()) { addComment(post._id, input.value); input.value = ''; } }}>Comment</button>
+              </div>
+            </div>
+          </article>
+        ))}
+      </main>
 
-            </article>
-          ))}
-
-        </main>
-      </div>
+      <aside className="right">
+        <div className="sidebar-card card">
+          <p style={{margin:0}}>Suggested</p>
+        </div>
+      </aside>
     </div>
+  </div>
+</div>
   );
 };
 
