@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import API_BASE_URL from "../config";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const Signup = () => {
     if (!name.trim() || !email.trim() || !password) return setError('Please complete all fields');
     try {
       setLoading(true);
-      const res = await axios.post("http://localhost:5000/auth/signup", { name, email, password });
+      const res = await axios.post(`${API_BASE_URL}/auth/signup`, { name, email, password });
 
       if (res.data.message && res.data.message.toLowerCase().includes('signup')) {
         navigate("/login");

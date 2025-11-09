@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import API_BASE_URL from "../config";
+
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,7 +17,7 @@ const Login = () => {
     if (!email.trim() || !password) return setError("Please fill email and password");
     try {
       setLoading(true);
-      const res = await axios.post("http://localhost:5000/auth/login", { email, password });
+      const res = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
 
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
