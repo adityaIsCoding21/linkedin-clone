@@ -1,75 +1,78 @@
-# LinkedIn Clone
+# LinkedIn Clone (Full Stack MERN Project)
 
-A small LinkedIn-like clone (frontend + backend) built with React (Vite) for the frontend and Node/Express + MongoDB for the backend.
+This is a LinkedIn-style social feed application built using the **MERN stack** where users can create posts, like and comment on posts, and interact socially.
 
-## What this repo contains
+---
 
-- `backend/` - Express server, routes, models.
-- `frontend/` - React (Vite) app.
+## ✨ Features
 
-## Quick start (local)
+- ✅ User Signup & Login (JWT Authentication)
+- 📝 Create Posts (Text + Optional Image)
+- ❤️ Like & Unlike Posts
+- 💬 Add Comments on Posts
+- ✏️ Edit and Delete Own Posts
+- 👤 View User Profiles
+- 🔐 Protected API routes
 
-1. Clone repository (if not already on your machine):
+---
 
-	git clone https://github.com/<your-username>/linkedin-clone.git
-	cd linkedin-clone
+## 🛠 Tech Stack
 
-2. Backend
+| Part | Technology |
+|------|------------|
+| Frontend | React (Vite) + Axios |
+| Backend | Node.js + Express.js |
+| Database | MongoDB Atlas + Mongoose |
+| Authentication | JWT |
+| File Upload | Multer (local storage) |
+| Deployment (Frontend) | Vercel |
+| Deployment (Backend) | Render |
 
-	cd backend
-	npm install
+---
 
-	Create a `.env` file (do NOT commit it) based on `.env.example`.
+## 📂 Project Structure
 
-	Example `.env` variables:
+linkedin-clone/
+│
+├── backend/
+│ ├── server.js
+│ ├── routes/
+│ ├── models/
+│ ├── middleware/
+│ └── public/uploads/ (ignored in git)
+│
+└── frontend/
+├── src/
+├── components/
+├── pages/
+└── config.js
 
-	- `MONGO_URI` - your MongoDB connection string
-	- `JWT_SECRET` - secret for authentication tokens
-	- `PORT` - backend port (default: 5000)
 
-	Start backend:
+---
 
-	npm run start
-	# or in development
-	npm run dev
+## ⚙️ Setup (Local)
 
-3. Frontend
+### 1️⃣ Clone the Repository
 
-	cd frontend
-	npm install
-	npm run dev
+```bash
+git clone https://github.com/adityaIsCoding21/linkedin-clone.git
+cd linkedin-clone
 
-	By default Vite serves on `http://localhost:5173` (or 3000 depending on config).
+cd backend
+npm install
 
-## Environment variables
 
-This repo ignores real `.env` files. Use `.env.example` as a template and create a local `.env` file.
+MONGO_URI=your_mongo_connection_string
+JWT_SECRET=your_secret_key
 
-## Creating the GitHub repo and pushing
 
-Option A — Using the GitHub website
+npm start
 
-1. Create a new repository on GitHub named `linkedin-clone` (your repo URL will be `https://github.com/<your-username>/linkedin-clone.git`).
-2. In your local project root run:
+cd ../frontend
+npm install
+npm run dev
 
-	git init
-	git add .
-	git commit -m "Initial commit"
-	git branch -M main
-	git remote add origin https://github.com/<your-username>/linkedin-clone.git
-	git push -u origin main
+👨‍💻 Author
 
-Option B — Using GitHub CLI (if installed)
-
-	gh repo create <your-username>/linkedin-clone --public --source=. --remote=origin --push
-
-(If you prefer a private repo, add `--private`.)
-
-## Notes
-
-- Make sure you DO NOT commit any real secrets. The `.gitignore` file here ignores `.env` and `node_modules`.
-- If you want, I can run the `git init` + initial commit for you and set the remote — tell me the remote URL or confirm you have `gh` configured and want the CLI route.
-
-## License
-
-MIT
+Aditya Yadav
+GL Bajaj Institute of Technology and Management
